@@ -45,7 +45,7 @@ function ChessGame() {
   };
 
   const fetchBoard = async () => {
-    const res = await axios.get('http://localhost:5000/api/board');
+    const res = await axios.get('https://chessboard-backend-prwn.onrender.com/api/board');
     setFen(res.data.fen);
     setTurn(res.data.turn);
     setCaptured(res.data.captured);
@@ -58,7 +58,7 @@ function ChessGame() {
 
   const onDrop = async (sourceSquare, targetSquare) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/move', {
+      const res = await axios.post('https://chessboard-backend-prwn.onrender.com/api/move', {
         from: sourceSquare,
         to: targetSquare
       });
@@ -72,7 +72,7 @@ function ChessGame() {
   };
 
   const resetGame = async () => {
-    const res = await axios.post('http://localhost:5000/api/reset');
+    const res = await axios.post('https://chessboard-backend-prwn.onrender.com/api/reset');
     setFen(res.data.fen);
     setTurn(res.data.turn);
     setCaptured(res.data.captured);
