@@ -15,7 +15,7 @@ function App() {
 
   const fetchBoard = async () => {
     try {
-      const response = await fetch("http://localhost:5000/board");
+      const response = await fetch("https://chessboard-backend-9zei.onrender.com/board");
       const data = await response.json();
       setBoard(data.board);
       setTurn(data.turn);
@@ -36,7 +36,7 @@ function App() {
     if (!selected || selected.row !== row || selected.col !== col) {
       setSelected({ row, col });
       try {
-        const response = await fetch("http://localhost:5000/legal-moves", {
+        const response = await fetch("https://chessboard-backend-9zei.onrender.com/legal-moves", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ from: { row, col } }),
@@ -49,7 +49,7 @@ function App() {
       }
     } else {
       try {
-        const response = await fetch("http://localhost:5000/move", {
+        const response = await fetch("https://chessboard-backend-9zei.onrender.com/move", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ from: selected, to: { row, col } }),
@@ -80,7 +80,7 @@ function App() {
 
   const resetGame = async () => {
     try {
-      await fetch("http://localhost:5000/reset", { method: "POST" });
+      await fetch("https://chessboard-backend-9zei.onrender.com/reset", { method: "POST" });
       fetchBoard();
     } catch (err) {
       console.error("Reset failed:", err);
