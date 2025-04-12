@@ -8,7 +8,11 @@ const { getBoardState, makeMove, resetGame } = require('./chessEngine');
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/board', (req, res) => {
+app.get("/", (req, res) => {
+  res.send("Backend running successfully!");
+});
+
+app.get('/board', (req, res) => {
   try {
     const boardState = getBoardState();
     res.json(boardState);
@@ -18,7 +22,7 @@ app.get('/api/board', (req, res) => {
   }
 });
 
-app.post('/api/move', (req, res) => {
+app.post('/move', (req, res) => {
   try {
     const { from, to } = req.body;
     const result = makeMove(from, to);
@@ -33,7 +37,7 @@ app.post('/api/move', (req, res) => {
   }
 });
 
-app.post('/api/reset', (req, res) => {
+app.post('/reset', (req, res) => {
   try {
     const boardState = resetGame();
     res.json(boardState);
