@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
   res.send("Backend running successfully!");
 });
 
-app.get('/board', (req, res) => {
+app.get('/api/board', (req, res) => {
   try {
     const boardState = getBoardState();
     res.json(boardState);
@@ -22,7 +22,7 @@ app.get('/board', (req, res) => {
   }
 });
 
-app.post('/move', (req, res) => {
+app.post('/api/move', (req, res) => {
   try {
     const { from, to } = req.body;
     const result = makeMove(from, to);
@@ -37,7 +37,19 @@ app.post('/move', (req, res) => {
   }
 });
 
-app.post('/reset', (req, res) => {
+app.post('/api/legal-moves', (req, res) => {
+  try {
+    const { from } = req.body;
+    const result = getLegalMoves(from); // <- You must define this in your chessEngine.js
+    res.json({ legalMoves: result });
+  } catch (error) {
+    console.error("Error getting legal moves:", error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+app.post('/api/reset', (req, res) => {
   try {
     const boardState = resetGame();
     res.json(boardState);
