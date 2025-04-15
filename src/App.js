@@ -1,121 +1,122 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import ChessBoardComponent from './components/Chessboard';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+// import { pieceSets, getPieceImage } from './components/pieceSets';
 
-import ChessGame from "./components/Chessboard";
-import "bootstrap/dist/css/bootstrap.min.css";
-
-function App() {
-  const [board, setBoard] = useState([]);
-  const [turn, setTurn] = useState("white");
-  const [selected, setSelected] = useState(null);
-  const [legalMoves, setLegalMoves] = useState([]);
-  const [score, setScore] = useState({ white: 0, black: 0 });
+function ChessGame() {
+  const [fen, setFen] = useState('start');
+  const [turn, setTurn] = useState('w');
+  const [theme, setTheme] = useState("default");
+  const [captured, setCaptured] = useState({ w: [], b: [] });
   const [winner, setWinner] = useState(null);
-  const [theme, setTheme] = useState("classic");
-  const [pieceStyle, setPieceStyle] = useState("default");
+  const pieceStyles = ['alpha', 'neo', 'classic'];
+  const [pieceStyle, setPieceStyle] = useState('alpha');  
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInvalidMove, setIsInvalidMove] = useState(false);
+
+
+
+  const themeColors = {
+    default: { light: '#f0d9b5', dark: '#b58863' },
+    green: { light: '#dfffe0', dark: '#3e8e41' },
+    dark: { light: '#add8e6', dark: '#4682b4' }
+  };
+
+  const pieceSets = {
+    classic: "https://images.chesscomfiles.com/chess-themes/pieces/classic/150",
+    neo: "https://images.chesscomfiles.com/chess-themes/pieces/neo/150",
+    alpha: "https://images.chesscomfiles.com/chess-themes/pieces/alpha/150"
+  };
+
+  const toggleTheme = () => {
+    const next = theme === 'default' ? 'green' : theme === 'green' ? 'dark' : 'default';
+    setTheme(next);
+  };
+
+  const togglePieceStyle = () => {
+    const currentIndex = pieceStyles.indexOf(pieceStyle);
+    const nextIndex = (currentIndex + 1) % pieceStyles.length;
+    setPieceStyle(pieceStyles[nextIndex]);
+  };
+
+  const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  const calculateScore = (pieces) =>
+    pieces.reduce((total, piece) => total + (pieceValues[piece.toLowerCase()] || 0), 0);
 
   const fetchBoard = async () => {
-    try {
-      const response = await fetch("https://chessboard-backend-prwn.onrender.com/api/board");
-      const data = await response.json();
-      setBoard(data.board);
-      setTurn(data.turn);
-      setWinner(data.winner || null);
-      setScore(data.score || { white: 0, black: 0 });
-    } catch (err) {
-      console.error("Error fetching board:", err);
-    }
+    const res = await axios.get('https://chessboard-backend-prwn.onrender.com/api/board');
+    setFen(res.data.fen);
+    setTurn(res.data.turn);
+    setCaptured(res.data.captured);
+    setWinner(res.data.winner);
   };
- 
+
   useEffect(() => {
     fetchBoard();
   }, []);
 
-  const handleSquareClick = async (row, col) => {
-    if (winner) return;
-
-    if (!selected || selected.row !== row || selected.col !== col) {
-      setSelected({ row, col });
-      try {
-        const response = await fetch("https://chessboard-backend-prwn.onrender.com/api/legal-moves", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from: { row, col } }),
-        });
-        const data = await response.json();
-        setLegalMoves(data.legalMoves || []);
-      } catch (err) {
-        console.error("Error fetching legal moves:", err);
-        setLegalMoves([]);
-      }
-    } else {
-      try {
-        const response = await fetch("https://chessboard-backend-prwn.onrender.com/api/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from: selected, to: { row, col } }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setBoard(data.board);
-          setTurn(data.turn);
-          setWinner(data.winner || null);
-          setScore(data.score);
-        } else {
-          alert(data.message || "Invalid move.");
-        }
-        setSelected(null);
-        setLegalMoves([]);
-      } catch (err) {
-        console.error("Move failed:", err);
-        setSelected(null);
-        setLegalMoves([]);
-      }
+  const onDrop = async (sourceSquare, targetSquare) => {
+    if (winner|| isLoading) return;
+    setIsInvalidMove(false);
+    setIsLoading(true);
+    try {
+      const res = await axios.post('https://chessboard-backend-prwn.onrender.com/api/move', {
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: 'q'
+      });
+      setFen(res.data.fen);
+      setTurn(res.data.turn);
+      setCaptured(res.data.captured);
+      setWinner(res.data.winner);
+    } catch (err) {
+      console.log("Invalid move");
+      setIsInvalidMove(true)
+      setTimeout(()=>{setIsInvalidMove(false);},100);
+    }finally{
+      setIsLoading(false);
     }
   };
-
-  const handleThemeChange = (newTheme) => setTheme(newTheme);
-  const handlePieceStyleChange = (style) => setPieceStyle(style);
 
   const resetGame = async () => {
-    try {
-      await fetch("https://chessboard-backend-prwn.onrender.com/api/reset", { method: "POST" });
-      fetchBoard();
-    } catch (err) {
-      console.error("Reset failed:", err);
-    }
+    const res = await axios.post('https://chessboard-backend-prwn.onrender.com/api/reset');
+    setFen(res.data.fen);
+    setTurn(res.data.turn);
+    setCaptured(res.data.captured);
+    setWinner(null);
   };
 
-  
-
-const toggleTheme = () => {
-  const currentIndex = themes.indexOf(theme);
-  const nextIndex = (currentIndex + 1) % themes.length;
-  setTheme(themes[nextIndex]);
-};
-
-
   return (
-    
     <div className="container text-center mt-1">
-      <h2>Chess Game</h2>
-      <div className="chessboard-container">
-  <ChessGame
-     board={board}
-     selected={selected}
-     onSquareClick={handleSquareClick}
-     theme={theme}
-     pieceStyle={pieceStyle}
-     legalMoves={legalMoves}
-     toggleTheme={toggleTheme}
-  />
-</div>
+    <h2>Chess Game</h2>
+    
+      <h5><strong>Score :</strong> White : {calculateScore(captured.b)} | Black : {calculateScore(captured.w)}</h5>
+      {winner ? <h2>{winner} Wins!</h2> : <span><strong>Current Turn:</strong> {turn === 'w' ? "White" : "Black"}</span>}
 
+      <div className="my-2">
+        <button className="btn btn-primary mx-2" onClick={toggleTheme}>Toggle Theme</button>
+        <button className="btn btn-secondary mx-2" onClick={togglePieceStyle}>Switch Piece Style</button>
+        <button className="btn btn-danger mx-2" onClick={resetGame}>Reset Game</button>
       </div>
+      
+     
+      <ChessBoardComponent
+        fen={fen}
+        onDrop={onDrop}
+        themeColors={themeColors[theme]}
+        pieceStyle={pieceStyle}
+        pieceSets={pieceSets}
+        turn={turn}
+      />
 
-   
+        {winner && <div className="alert alert-success mt-2">Winner: {winner}</div>}
+        {(isLoading|| isInvalidMove) &&  <div className="loading-overlay"><p >
+        {isInvalidMove ? "Invalid Move" : "Processing Move..."}</p></div>}
+    </div>
   );
+
 }
 
-export default App;
+export default ChessGame;
