@@ -17,6 +17,11 @@ function getBoardState() {
   };
 }
 
+function getLegalMoves(from) {
+  const moves = game.moves({ square: from, verbose: true });
+  return moves.map((move) => move.to);
+}
+
 function makeMove(from, to) {
   const move = game.move({ from, to, promotion: 'q' });
   if (move && move.captured) {
@@ -32,4 +37,4 @@ function resetGame() {
   return getBoardState();
 }
 
-module.exports = { getBoardState, makeMove, resetGame };
+module.exports = { getBoardState, makeMove, resetGame, getLegalMoves };
